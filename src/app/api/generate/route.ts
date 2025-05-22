@@ -3,10 +3,18 @@ import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
 
-// OpenAI 클라이언트 초기화
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// OpenAI 클라이언트 초기화 - 런타임에 초기화하도록 변경
+let openai: OpenAI;
+
+// 클라이언트 초기화 함수
+function initOpenAI() {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || "dummy-key",
+    });
+  }
+  return openai;
+}
 
 // 프롬프트 파일 경로
 const promptsFilePath = path.join(process.cwd(), "src/data/prompts.json");
@@ -27,6 +35,9 @@ function loadPrompts() {
 
 export async function POST(request: NextRequest) {
   try {
+    // OpenAI 클라이언트 초기화
+    const openaiClient = initOpenAI();
+
     // FormData 형식으로 받기
     const formData = await request.formData();
     const requestData: Record<string, any> = {};
@@ -128,8 +139,20 @@ ${requestData.brandName ? `소속/브랜드: ${requestData.brandName}` : ''}
       userPrompt += `SEO 키워드: ${requestData.seoKeywords}\n`;
     }
 
+    // API 키가 유효한지 확인
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "dummy-key") {
+      return NextResponse.json(
+        { 
+          title: "API 키 미설정",
+          content: "OpenAI API 키가 설정되지 않았습니다. 관리자에게 문의하세요.",
+          tags: ["API", "오류", "설정", "OpenAI", "키"],
+          cta: "관리자에게 API 키 설정을 요청하세요." 
+        }
+      );
+    }
+
     // API 호출
-    const completion = await openai.chat.completions.create({
+    const completion = await openaiClient.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }

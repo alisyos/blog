@@ -3,7 +3,6 @@
   "installCommand": "npm install",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "envVarPopulationStrategy": "namespaced-secrets",
   "env": {
     "OPENAI_API_KEY": "dummy-key-for-build"
   }

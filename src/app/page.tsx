@@ -8,17 +8,12 @@ import Link from "next/link";
 
 type FormData = {
   contentPurpose: string;
-  userInfo: string;
-  brandName: string;
+  content: string;
+  contentFiles: FileList;
+  persona: string;
   targetAudience: string;
-  keywords: string;
-  coreMessage: string;
-  productDetails: string;
-  reviewInfo: string;
-  referenceContent: string;
-  referenceFiles: FileList;
+  writingTone: string;
   writingStyle: string;
-  seoKeywords: string;
 };
 
 export default function Home() {
@@ -48,20 +43,20 @@ export default function Home() {
       
       // 일반 텍스트 데이터 추가
       Object.keys(data).forEach((key) => {
-        if (key !== "referenceFiles") {
+        if (key !== "contentFiles") {
           formData.append(key, data[key as keyof FormData] as string);
         }
       });
       
       // 파일 데이터 처리
-      if (data.referenceFiles && data.referenceFiles.length > 0) {
-        for (let i = 0; i < data.referenceFiles.length; i++) {
-          formData.append("files", data.referenceFiles[i]);
+      if (data.contentFiles && data.contentFiles.length > 0) {
+        for (let i = 0; i < data.contentFiles.length; i++) {
+          formData.append("files", data.contentFiles[i]);
         }
       }
       
       // API 엔드포인트 변경을 위한 준비
-      const apiEndpoint = data.referenceFiles && data.referenceFiles.length > 0
+      const apiEndpoint = data.contentFiles && data.contentFiles.length > 0
         ? "/api/generate-with-files"
         : "/api/generate";
       
@@ -103,7 +98,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* 좌측: 입력 폼 */}
-          <div className="w-full lg:w-1/2">
+          <div className="w-full lg:w-2/5">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                 블로그 포스트 작성하기
@@ -119,7 +114,7 @@ export default function Home() {
           </div>
 
           {/* 우측: 결과 표시 */}
-          <div className="w-full lg:w-1/2">
+          <div className="w-full lg:w-3/5">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-full">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center h-full py-12 text-center text-gray-500 dark:text-gray-400">

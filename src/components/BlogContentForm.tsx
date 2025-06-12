@@ -45,7 +45,7 @@ export default function BlogContentForm({
         >
           <option value="">항목 선택</option>
           <option value="news">기사/이슈형 콘텐츠</option>
-          <option value="insight">인사이드/칼럼형 콘텐츠</option>
+          <option value="insight">인사이트/칼럼형 콘텐츠</option>
           <option value="review">리뷰 및 비교형 콘텐츠</option>
           <option value="information">정보 제공형 콘텐츠</option>
         </select>

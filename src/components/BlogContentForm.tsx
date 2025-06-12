@@ -1,9 +1,11 @@
 "use client";
 
 import { UseFormRegister, FieldErrors } from "react-hook-form";
+import { useState } from "react";
 
 type FormData = {
   contentPurpose: string;
+  contentInputType: string;
   content: string;
   contentFiles: FileList;
   persona: string;
@@ -27,8 +29,10 @@ export default function BlogContentForm({
   contentPurpose,
   isLoading,
 }: BlogContentFormProps) {
+  const [contentInputType, setContentInputType] = useState<string>("");
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4 overflow-auto max-h-[calc(100vh-12rem)]">
+    <form onSubmit={onSubmit} className="space-y-4">
       {/* 목적 선택 */}
       <div>
         <label htmlFor="contentPurpose" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -50,44 +54,106 @@ export default function BlogContentForm({
         )}
       </div>
 
-      {/* 내용 입력 */}
+      {/* 내용 입력 방식 선택 */}
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          내용 *
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          내용 입력 방식 *
         </label>
-        <textarea
-          id="content"
-          {...register("content", { required: "내용을 입력해주세요" })}
-          rows={6}
-          className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-sm"
-          placeholder="게시물에 들어갈 내용을 입력해 주세요."
-        ></textarea>
-        {errors.content && (
-          <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+            contentInputType === 'text' 
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+          }`}>
+            <input
+              type="radio"
+              value="text"
+              {...register("contentInputType", { required: "입력 방식을 선택해주세요" })}
+              onChange={(e) => setContentInputType(e.target.value)}
+              className="sr-only"
+            />
+            <div className="text-center">
+              <div className="text-xl mb-1">✏️</div>
+              <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">직접 입력</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">텍스트로 직접 작성</div>
+            </div>
+          </label>
+          
+          <label className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+            contentInputType === 'file' 
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+          }`}>
+            <input
+              type="radio"
+              value="file"
+              {...register("contentInputType", { required: "입력 방식을 선택해주세요" })}
+              onChange={(e) => setContentInputType(e.target.value)}
+              className="sr-only"
+            />
+            <div className="text-center">
+              <div className="text-xl mb-1">📁</div>
+              <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">파일 업로드</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">txt, docx 파일</div>
+            </div>
+          </label>
+        </div>
+        {errors.contentInputType && (
+          <p className="mt-1 text-sm text-red-600">{errors.contentInputType.message}</p>
         )}
-        
-        {/* 파일 업로드 옵션 */}
-        <div className="mt-2">
+      </div>
+
+      {/* 조건부 내용 입력 */}
+      {contentInputType === 'text' && (
+        <div>
+          <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            내용 *
+          </label>
+          <textarea
+            id="content"
+            {...register("content", { 
+              required: contentInputType === 'text' ? "내용을 입력해주세요" : false 
+            })}
+            rows={6}
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-sm"
+            placeholder="게시물에 들어갈 내용을 입력해 주세요."
+          ></textarea>
+          {errors.content && (
+            <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
+          )}
+        </div>
+      )}
+
+      {contentInputType === 'file' && (
+        <div>
           <label htmlFor="contentFiles" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            또는 파일 업로드 (txt, docx)
+            파일 업로드 *
           </label>
           <input
             type="file"
             id="contentFiles"
             multiple
             accept=".txt,.docx"
-            {...register("contentFiles")}
+            {...register("contentFiles", {
+              required: contentInputType === 'file' ? "파일을 선택해주세요" : false
+            })}
             className="block w-full text-sm text-gray-500 dark:text-gray-400
               file:mr-4 file:py-2 file:px-4
               file:rounded-md file:border-0
               file:text-sm file:font-medium
               file:bg-gray-100 file:text-gray-700
               dark:file:bg-gray-700 dark:file:text-gray-200
-              hover:file:bg-gray-200 dark:hover:file:bg-gray-600"
+              hover:file:bg-gray-200 dark:hover:file:bg-gray-600
+              border border-gray-300 dark:border-gray-600 rounded-md p-2"
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">txt, docx 파일을 첨부할 수 있습니다.</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            txt, docx 파일을 첨부할 수 있습니다. 여러 파일 선택 가능합니다.
+          </p>
+          {errors.contentFiles && (
+            <p className="mt-1 text-sm text-red-600">{errors.contentFiles.message}</p>
+          )}
         </div>
-      </div>
+      )}
 
       {/* 페르소나 */}
       <div>

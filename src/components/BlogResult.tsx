@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { ArrowPathIcon, ClipboardIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import { saveAs } from "file-saver";
 
 type BlogContent = {
   title: string;
@@ -74,35 +76,129 @@ export default function BlogResult({ blogContent, onReset }: BlogResultProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    let fullContent = `# ${blogContent.title}\n\n`;
-    
-    contentArray.forEach(item => {
-      if (typeof item === 'string') {
-        fullContent += `${item}\n\n`;
-      }
-    });
-    
-    if (blogContent.footnote && blogContent.footnote.length > 0) {
-      fullContent += `## 참고자료\n`;
-      blogContent.footnote.forEach((ref, index) => {
-        fullContent += `[${index + 1}] ${ref.sourceName} - ${ref.authorOrInstitution}\n`;
-        if (ref.url) fullContent += `    ${ref.url}\n`;
+  const handleDownload = async () => {
+    try {
+      // 문서 요소들을 저장할 배열
+      const docElements: Paragraph[] = [];
+
+      // 제목 추가
+      docElements.push(
+        new Paragraph({
+          text: blogContent.title,
+          heading: HeadingLevel.TITLE,
+          spacing: { after: 400 }
+        })
+      );
+
+      // 콘텐츠 처리
+      contentArray.forEach(item => {
+        if (typeof item === 'string') {
+          // h3 태그 처리
+          if (item.includes('<h3>')) {
+            const h3Match = item.match(/<h3>(.*?)<\/h3>/);
+            if (h3Match) {
+              const h3Content = h3Match[1];
+              docElements.push(
+                new Paragraph({
+                  text: h3Content,
+                  heading: HeadingLevel.HEADING_2,
+                  spacing: { before: 300, after: 200 }
+                })
+              );
+            }
+          } else if (item.trim()) {
+            // 일반 텍스트 문단
+            docElements.push(
+              new Paragraph({
+                children: [new TextRun(item)],
+                spacing: { after: 200 }
+              })
+            );
+          }
+        } else if (typeof item === 'object' && item !== null && 'imageDepiction' in item && 'alttag' in item) {
+          // 이미지 설명 추가
+          const imageItem = item as ImageContent;
+          docElements.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "[이미지] ",
+                  bold: true
+                }),
+                new TextRun(imageItem.imageDepiction)
+              ],
+              spacing: { after: 200 }
+            })
+          );
+        }
       });
-      fullContent += '\n';
+
+      // 각주 섹션 추가
+      if (blogContent.footnote && blogContent.footnote.length > 0) {
+        docElements.push(
+          new Paragraph({
+            text: "참고자료",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 400, after: 200 }
+          })
+        );
+
+        blogContent.footnote.forEach((ref, index) => {
+          docElements.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `[${index + 1}] `,
+                  bold: true
+                }),
+                new TextRun(`${ref.sourceName} - ${ref.authorOrInstitution}`),
+                ...(ref.url ? [new TextRun({ text: ` (${ref.url})`, italics: true })] : [])
+              ],
+              spacing: { after: 100 }
+            })
+          );
+        });
+      }
+
+      // 태그 섹션 추가
+      if (blogContent.tags && blogContent.tags.length > 0) {
+        docElements.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "태그: ",
+                bold: true
+              }),
+              new TextRun(blogContent.tags.join(", "))
+            ],
+            spacing: { before: 300 }
+          })
+        );
+      }
+
+      // 문서 생성
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: docElements
+          }
+        ]
+      });
+
+      // 파일 생성 및 다운로드
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([buffer], { 
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+      });
+      
+      const fileName = `${blogContent.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_')}.docx`;
+      saveAs(blob, fileName);
+      
+    } catch (error) {
+      console.error('DOCX 다운로드 오류:', error);
+      alert('파일 다운로드 중 오류가 발생했습니다.');
     }
-    
-    fullContent += `태그: ${blogContent.tags.join(", ")}`;
-    
-    const blob = new Blob([fullContent], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${blogContent.title.replace(/\s+/g, "_")}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   // 콘텐츠 타입별 아이콘과 색상 설정

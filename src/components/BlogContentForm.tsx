@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type FormData = {
   contentPurpose: string;
+  purpose: string;
   contentInputType: string;
   content: string;
   contentFiles: FileList;
@@ -33,14 +34,14 @@ export default function BlogContentForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {/* 목적 선택 */}
+      {/* 유형 선택 */}
       <div>
         <label htmlFor="contentPurpose" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          목적 *
+          유형 *
         </label>
         <select
           id="contentPurpose"
-          {...register("contentPurpose", { required: "목적을 선택해주세요" })}
+          {...register("contentPurpose", { required: "유형을 선택해주세요" })}
           className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         >
           <option value="">항목 선택</option>
@@ -51,6 +52,23 @@ export default function BlogContentForm({
         </select>
         {errors.contentPurpose && (
           <p className="mt-1 text-sm text-red-600">{errors.contentPurpose.message}</p>
+        )}
+      </div>
+
+      {/* 목적 */}
+      <div>
+        <label htmlFor="purpose" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          목적 *
+        </label>
+        <textarea
+          id="purpose"
+          {...register("purpose", { required: "목적을 입력해주세요" })}
+          rows={2}
+          className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-sm resize-none"
+          placeholder="작성할 블로그의 목적을 간단하고 명확하게 입력해 주세요.&#10;ex) 제품 비교, 정책 안내, 기능 소개 등"
+        />
+        {errors.purpose && (
+          <p className="mt-1 text-sm text-red-600">{errors.purpose.message}</p>
         )}
       </div>
 

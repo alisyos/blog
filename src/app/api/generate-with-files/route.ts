@@ -262,6 +262,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     
     // FormData에서 텍스트 필드 추출
+    const contentPurpose = formData.get('contentPurpose') as string;
     const purpose = formData.get('purpose') as string;
     const persona = formData.get('persona') as string;
     const targetAudience = formData.get('targetAudience') as string;
@@ -273,6 +274,7 @@ export async function POST(request: NextRequest) {
 
     // 디버깅을 위한 로깅
     console.log('Received form data:', {
+      contentPurpose,
       purpose,
       persona,
       targetAudience,
@@ -283,10 +285,10 @@ export async function POST(request: NextRequest) {
     });
 
     // 필수 필드 검증  
-    if (!purpose || !persona) {
-      console.log('Missing required fields:', { purpose, persona });
+    if (!contentPurpose || !purpose || !persona) {
+      console.log('Missing required fields:', { contentPurpose, purpose, persona });
       return NextResponse.json(
-        { error: '목적과 페르소나는 필수 입력사항입니다.' },
+        { error: '유형, 목적, 페르소나는 필수 입력사항입니다.' },
         { status: 400 }
       );
     }
@@ -340,8 +342,8 @@ export async function POST(request: NextRequest) {
     // 프롬프트 로드
     const prompts = loadPrompts();
     
-    // purpose 값이 이미 영어 키이므로 직접 사용, 없으면 news로 fallback
-    const promptKey = purpose;
+    // contentPurpose 값이 이미 영어 키이므로 직접 사용, 없으면 news로 fallback
+    const promptKey = contentPurpose;
     const systemPrompt = prompts[promptKey]?.system || prompts['news']?.system;
 
     if (!systemPrompt) {
@@ -353,6 +355,7 @@ export async function POST(request: NextRequest) {
 
     // 템플릿 변수 치환
     const processedPrompt = replaceTemplateVariables(systemPrompt, {
+      유형: contentPurpose,
       목적: purpose,
       내용: combinedContent,
       페르소나: persona,
@@ -370,7 +373,7 @@ export async function POST(request: NextRequest) {
         },
         {
           role: 'user',
-          content: `목적: ${purpose}\n파일 내용: ${combinedContent}\n페르소나: ${persona}${targetAudience ? `\n타깃 독자층: ${targetAudience}` : ''}${writingTone ? `\n문체: ${writingTone}` : ''}${writingStyle ? `\n문장스타일: ${writingStyle}` : ''}`
+          content: `유형: ${contentPurpose}\n목적: ${purpose}\n파일 내용: ${combinedContent}\n페르소나: ${persona}${targetAudience ? `\n타깃 독자층: ${targetAudience}` : ''}${writingTone ? `\n문체: ${writingTone}` : ''}${writingStyle ? `\n문장스타일: ${writingStyle}` : ''}`
         }
       ],
       max_tokens: 4000,
@@ -388,7 +391,7 @@ export async function POST(request: NextRequest) {
       const blogPost = JSON.parse(result);
       
       // contentPurpose 추가
-      blogPost.contentPurpose = purpose;
+      blogPost.contentPurpose = contentPurpose;
       
       return NextResponse.json(blogPost);
     } catch (parseError) {
@@ -398,7 +401,7 @@ export async function POST(request: NextRequest) {
         content: [result],
         tags: ["블로그", "포스트", "파일"],
         footnote: [],
-        contentPurpose: purpose
+        contentPurpose: contentPurpose
       });
     }
 

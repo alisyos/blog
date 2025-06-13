@@ -26,12 +26,12 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { purpose, content, persona, targetAudience, writingTone, writingStyle } = await request.json();
+    const { contentPurpose, purpose, content, persona, targetAudience, writingTone, writingStyle } = await request.json();
 
     // 필수 필드 검증
-    if (!purpose || !content || !persona) {
+    if (!contentPurpose || !purpose || !content || !persona) {
       return NextResponse.json(
-        { error: '목적, 내용, 페르소나는 필수 입력사항입니다.' },
+        { error: '유형, 목적, 내용, 페르소나는 필수 입력사항입니다.' },
         { status: 400 }
       );
     }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // 프롬프트 로드
     const prompts = loadPrompts();
     
-    // 목적에 따른 프롬프트 키 매핑
+    // 유형에 따른 프롬프트 키 매핑
     const promptKeyMap: Record<string, string> = {
       'news': 'news',
       'insight': 'insight', 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       'information': 'information'
     };
 
-    const promptKey = promptKeyMap[purpose] || 'news';
+    const promptKey = promptKeyMap[contentPurpose] || 'news';
     const systemPrompt = prompts[promptKey]?.system;
 
     if (!systemPrompt) {
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
 
     // 템플릿 변수 치환
     const processedPrompt = replaceTemplateVariables(systemPrompt, {
+      유형: contentPurpose,
       목적: purpose,
       내용: content,
       페르소나: persona,
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
         },
         {
           role: 'user',
-          content: `목적: ${purpose}\n내용: ${content}\n페르소나: ${persona}${targetAudience ? `\n타깃 독자층: ${targetAudience}` : ''}${writingTone ? `\n문체: ${writingTone}` : ''}${writingStyle ? `\n문장스타일: ${writingStyle}` : ''}`
+          content: `유형: ${contentPurpose}\n목적: ${purpose}\n내용: ${content}\n페르소나: ${persona}${targetAudience ? `\n타깃 독자층: ${targetAudience}` : ''}${writingTone ? `\n문체: ${writingTone}` : ''}${writingStyle ? `\n문장스타일: ${writingStyle}` : ''}`
         }
       ],
       max_tokens: 4000,
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
       const blogPost = JSON.parse(result);
       
       // contentPurpose 추가
-      blogPost.contentPurpose = purpose;
+      blogPost.contentPurpose = contentPurpose;
       
       return NextResponse.json(blogPost);
     } catch (parseError) {
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
         content: [result],
         tags: ["블로그", "포스트"],
         footnote: [],
-        contentPurpose: purpose
+        contentPurpose: contentPurpose
       });
     }
 

@@ -8,6 +8,7 @@ import Link from "next/link";
 
 type FormData = {
   contentPurpose: string;
+  purpose: string;
   contentInputType: string;
   content: string;
   contentFiles: FileList;
@@ -47,7 +48,8 @@ export default function Home() {
         const formData = new FormData();
         
         // 필수 필드들 추가
-        formData.append('purpose', data.contentPurpose);
+        formData.append('contentPurpose', data.contentPurpose);
+        formData.append('purpose', data.purpose);
         formData.append('persona', data.persona);
         if (data.targetAudience) formData.append('targetAudience', data.targetAudience);
         if (data.writingTone) formData.append('writingTone', data.writingTone);
@@ -80,7 +82,8 @@ export default function Home() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            purpose: data.contentPurpose,
+            contentPurpose: data.contentPurpose,
+            purpose: data.purpose,
             content: data.content,
             persona: data.persona,
             targetAudience: data.targetAudience || '',

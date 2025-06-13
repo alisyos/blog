@@ -173,10 +173,24 @@ export default function BlogResult({ blogContent, onReset }: BlogResultProps) {
     }
 
     if (typeof item === 'string') {
-      // h3 태그 처리
-      if (item.includes('<h3>')) {
-        return <div className="my-4" dangerouslySetInnerHTML={{ __html: item }} />;
-      }
+              // h3 태그 처리 - 볼드처리와 음영처리 적용
+        if (item.includes('<h3>')) {
+          // h3 태그 내용 추출
+          const h3Match = item.match(/<h3>(.*?)<\/h3>/);
+          if (h3Match) {
+            const h3Content = h3Match[1];
+            return (
+              <div className="my-6 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-blue-900/30 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-0 flex items-center">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                  {h3Content}
+                </h3>
+              </div>
+            );
+          }
+          // 매치되지 않으면 기본 처리
+          return <div className="my-4" dangerouslySetInnerHTML={{ __html: item }} />;
+        }
       
       // 일반 텍스트 문단
       return <p className="mb-4 leading-relaxed">{item}</p>;

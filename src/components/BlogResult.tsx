@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ArrowPathIcon, ClipboardIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
 
 type BlogContent = {
@@ -79,7 +79,7 @@ export default function BlogResult({ blogContent, onReset }: BlogResultProps) {
   const handleDownload = async () => {
     try {
       // 문서 요소들을 저장할 배열
-      const docElements: Paragraph[] = [];
+      const docElements: (Paragraph | Table)[] = [];
 
       // 제목 추가
       docElements.push(
@@ -116,17 +116,64 @@ export default function BlogResult({ blogContent, onReset }: BlogResultProps) {
             );
           }
         } else if (typeof item === 'object' && item !== null && 'imageDepiction' in item && 'alttag' in item) {
-          // 이미지 설명 추가
+          // 이미지 설명 추가 - 1x1 표로 박스 효과
           const imageItem = item as ImageContent;
+          
+          const imageTable = new Table({
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [
+                      new Paragraph({
+                        children: [
+                          new TextRun({
+                            text: "[이미지 생성 프롬프트]",
+                            bold: true,
+                            color: "0066CC"
+                          })
+                        ],
+                        spacing: { after: 100 }
+                      }),
+                      new Paragraph({
+                        children: [
+                          new TextRun({
+                            text: imageItem.imageDepiction,
+                            italics: true,
+                            color: "333333"
+                          })
+                        ]
+                      })
+                    ],
+                    width: {
+                      size: 100,
+                      type: WidthType.PERCENTAGE
+                    },
+                    borders: {
+                      top: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+                      bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+                      left: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+                      right: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" }
+                    },
+                    shading: {
+                      fill: "F8F9FA"
+                    }
+                  })
+                ]
+              })
+            ],
+            width: {
+              size: 100,
+              type: WidthType.PERCENTAGE
+            }
+          });
+          
+          docElements.push(imageTable);
+          
+          // 표 다음에 간격 추가
           docElements.push(
             new Paragraph({
-              children: [
-                new TextRun({
-                  text: "[이미지] ",
-                  bold: true
-                }),
-                new TextRun(imageItem.imageDepiction)
-              ],
+              text: "",
               spacing: { after: 200 }
             })
           );
@@ -258,12 +305,14 @@ export default function BlogResult({ blogContent, onReset }: BlogResultProps) {
   const renderContent = (item: string | ImageContent) => {
     if (isImageContent(item)) {
       return (
-        <div className="my-6 p-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <div className="flex items-center mb-2">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">🖼️ 이미지 설명</span>
+        <div className="my-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+          <div className="flex items-center mb-3">
+            <span className="text-sm font-bold text-blue-700 dark:text-blue-300">📷 [이미지 생성 프롬프트]</span>
           </div>
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{item.imageDepiction}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-500">Alt 텍스트: {item.alttag}</p>
+          <div className="pl-4 border-l-2 border-blue-300 dark:border-blue-600">
+            <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-2">{item.imageDepiction}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Alt 텍스트: {item.alttag}</p>
+          </div>
         </div>
       );
     }
